@@ -4,15 +4,25 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js",
+    "dev": "nodemon app.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@langchain/community": "^0.3.12",
+    "@langchain/core": "^0.3.17",
+    "@langchain/groq": "^0.1.2",
     "@langchain/openai": "^0.3.12",
+    "axios": "^1.7.7",
+    "cassandra-driver": "^4.7.2",
     "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
     "express": "^4.21.1",
     "langchain": "^0.3.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
   }
 }
