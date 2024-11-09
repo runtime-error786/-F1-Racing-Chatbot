@@ -2,6 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { chatApi } = require('./Controller/scraperController'); 
 
-router.post('/scrape_and_embed', chatApi);
+router.post('/chat', chatApi);
 
 module.exports = router;

@@ -1,12 +1,14 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
-import "./Style.css"
+import axios from 'axios'; // Add axios for HTTP requests
+import "./Style.css";
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [loading, setLoading] = useState(false); // Loading state for the dots
 
   // Toggle dark mode and save to local storage
   const toggleDarkMode = () => {
@@ -26,16 +28,37 @@ export default function Chatbot() {
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (input.trim()) {
+      // Add user message to chat
       setMessages([...messages, { sender: 'user', text: input }]);
       setInput('');
-      setTimeout(() => {
+
+      setLoading(true); // Start loading when sending message
+
+      try {
+        // Send message to backend
+        const response = await axios.post('http://localhost:3001/api/chat', {
+          query: input,
+        });
+
+        // Handle response from backend (bot's reply)
+        const botResponse = response.data.answer || "I don't know.";
+
+        // Add bot response to chat
         setMessages((prev) => [
           ...prev,
-          { sender: 'bot', text: 'Hello! How can I assist you?' },
+          { sender: 'bot', text: botResponse },
         ]);
-      }, 500);
+      } catch (error) {
+        console.error('Error sending message to backend:', error);
+        setMessages((prev) => [
+          ...prev,
+          { sender: 'bot', text: "Error: Unable to reach the backend." },
+        ]);
+      } finally {
+        setLoading(false); // Stop loading once the response is received
+      }
     }
   };
 
@@ -84,6 +107,14 @@ export default function Chatbot() {
               )}
             </div>
           ))}
+          {/* Show loading dots while waiting for response */}
+          {loading && (
+            <div className="flex justify-center items-center space-x-2">
+              <div className="w-3 h-3 bg-gray-600 rounded-full animate-ping"></div>
+              <div className="w-3 h-3 bg-gray-600 rounded-full animate-ping animation-delay-200"></div>
+              <div className="w-3 h-3 bg-gray-600 rounded-full animate-ping animation-delay-400"></div>
+            </div>
+          )}
         </div>
 
         {/* Input and Send Button */}
