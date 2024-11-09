@@ -129,29 +129,44 @@ async function retrieveRelevantDocuments(queryText) {
   }
 }
 
+async function saveConversation(userId, role, message) {
+  const insertQuery = `INSERT INTO default_keyspace.conversations (user_id, timestamp, role, message) VALUES (?, toTimestamp(now()), ?, ?)`;
+  await client.execute(insertQuery, [userId, role, message], { prepare: true });
+}
+
+async function getConversationHistory(userId) {
+  const selectQuery = `SELECT role, message FROM default_keyspace.conversations WHERE user_id = ? ORDER BY timestamp ASC`;
+  const result = await client.execute(selectQuery, [userId], { prepare: true });
+  return result.rows.map(row => ({ role: row.role, content: row.message }));
+}
+
 exports.chatApi = async (req, res) => {
-    try {
-      const dataExists = await checkIfDataExists();
-      connect();
-      if (!dataExists) {
-        console.log("No data found, scraping and storing new data...");
-        const text = await scrapeText();
-        await embedAndStoreText(text);
-      }
-  
-      const { query } = req.body;
-      if (!query) {
-        return res.status(400).json({ error: "Query is required." });
-      }
-  
-      const relevantDocs = await retrieveRelevantDocuments(query);
-      if (relevantDocs.length === 0) {
-        return res.status(200).json({ answer: "I don't know." });
-      }
-  
-      const context = relevantDocs.map((doc) => doc.text).join("\n");
-  
-      const systemPrompt = `
+  try {
+    const userId = req.body.userId || uuidv4(); // Assume `userId` is passed, otherwise generate one
+    console.log(userId);
+    const dataExists = await checkIfDataExists();
+    connect();
+    if (!dataExists) {
+      console.log("No data found, scraping and storing new data...");
+      const text = await scrapeText();
+      await embedAndStoreText(text);
+    }
+
+    const { query } = req.body;
+    if (!query) {
+      return res.status(400).json({ error: "Query is required." });
+    }
+
+    const relevantDocs = await retrieveRelevantDocuments(query);
+    if (relevantDocs.length === 0) {
+      return res.status(200).json({ answer: "I don't know." });
+    }
+
+    const context = relevantDocs.map((doc) => doc.text).join("\n");
+
+    const conversationHistory = await getConversationHistory(userId);
+
+    const systemPrompt = `
       You are an assistant designed to answer questions specifically about Formula 1 racing cars, drivers, constructors, races, and related topics based only on the context provided below.
       Please use the relevant documents provided in the "Context" section to answer the question in the "Question" section. If the information is not available in the context, respond with: "I don't know."
       
@@ -160,21 +175,25 @@ exports.chatApi = async (req, res) => {
       \n\nQuestion: {input}
       
       Answer:`;
-  
-      const prompt = systemPrompt
-        .replace("{context}", context)
-        .replace("{input}", query);
-  
-      const messages = [
-        { role: "system", content: prompt },
-        { role: "user", content: query },
-      ];
-  
-      const response = await llm.invoke(messages);
-  
-      res.json({ answer: response.text });
-    } catch (error) {
-      console.error("Error in chat API:", error);
-      res.status(500).json({ error: "Failed to process the request." });
-    }
-  };
+
+    const prompt = systemPrompt
+      .replace("{context}", context)
+      .replace("{input}", query);
+
+    const messages = [
+      ...conversationHistory, // Include past conversation history
+      { role: "system", content: prompt },
+      { role: "user", content: query },
+    ];
+
+    const response = await llm.invoke(messages);
+
+    await saveConversation(userId, "user", query); // Save user query to history
+    await saveConversation(userId, "assistant", response.text); // Save assistant's response
+
+    res.json({ answer: response.text });
+  } catch (error) {
+    console.error("Error in chat API:", error);
+    res.status(500).json({ error: "Failed to process the request." });
+  }
+};

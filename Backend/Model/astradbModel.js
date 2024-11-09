@@ -25,9 +25,19 @@ async function connect() {
 );
 
     `;
-
+    const createConversationsTableQuery = `
+    CREATE TABLE IF NOT EXISTS default_keyspace.conversations (
+      user_id UUID,
+      timestamp TIMESTAMP,
+      role TEXT,
+      message TEXT,
+      PRIMARY KEY (user_id, timestamp)
+    );
+  `;
     await client.execute(createTableQuery);
     console.log('Table "text_embeddings" created successfully.');
+    await client.execute(createConversationsTableQuery);
+    console.log('Table "conversations" created successfully.');
   } catch (error) {
     console.error("Error connecting to AstraDB or creating table:", error);
   }

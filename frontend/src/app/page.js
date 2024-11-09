@@ -1,21 +1,29 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
-import axios from 'axios'; // Add axios for HTTP requests
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid'; // Import uuid
 import "./Style.css";
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [loading, setLoading] = useState(false); // Loading state for the dots
+  const [loading, setLoading] = useState(false);
 
-  // Toggle dark mode and save to local storage
+  // Retrieve or set userId in localStorage using uuidv4 for uniqueness
+  useEffect(() => {
+    if (!localStorage.getItem('userId')) {
+      localStorage.setItem('userId', uuidv4()); // Use uuidv4 to generate a unique ID
+    }
+  }, []);
+
+  const userId = localStorage.getItem('userId');
+
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
   };
 
-  // Apply theme from local storage on page load
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme) {
@@ -23,29 +31,23 @@ export default function Chatbot() {
     }
   }, []);
 
-  // Save theme preference to local storage
   useEffect(() => {
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
   const handleSendMessage = async () => {
     if (input.trim()) {
-      // Add user message to chat
       setMessages([...messages, { sender: 'user', text: input }]);
       setInput('');
-
-      setLoading(true); // Start loading when sending message
+      setLoading(true);
 
       try {
-        // Send message to backend
         const response = await axios.post('http://localhost:3001/api/chat', {
           query: input,
+          userId,
         });
 
-        // Handle response from backend (bot's reply)
         const botResponse = response.data.answer || "I don't know.";
-
-        // Add bot response to chat
         setMessages((prev) => [
           ...prev,
           { sender: 'bot', text: botResponse },
@@ -57,7 +59,7 @@ export default function Chatbot() {
           { sender: 'bot', text: "Error: Unable to reach the backend." },
         ]);
       } finally {
-        setLoading(false); // Stop loading once the response is received
+        setLoading(false);
       }
     }
   };
@@ -69,7 +71,6 @@ export default function Chatbot() {
           Chatbot Assistant
         </h2>
 
-        {/* Dark/Light Mode Toggle Icon */}
         <button
           onClick={toggleDarkMode}
           className="absolute top-4 right-4 p-2 bg-gray-700 text-white rounded-full hover:bg-gray-600 focus:outline-none"
@@ -81,14 +82,12 @@ export default function Chatbot() {
           )}
         </button>
 
-        {/* Chat messages container */}
         <div className="flex flex-col space-y-4 h-96 overflow-y-auto p-6 mb-6 border border-gray-200 rounded-2xl bg-gray-50 shadow-inner custom-scrollbar">
           {messages.map((message, index) => (
             <div
               key={index}
               className={`flex items-center ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              {/* Label for bot */}
               {message.sender === 'bot' && (
                 <span className="text-sm font-medium text-gray-600 mr-2">AI</span>
               )}
@@ -101,13 +100,11 @@ export default function Chatbot() {
               >
                 {message.text}
               </p>
-              {/* Label for user */}
               {message.sender === 'user' && (
                 <span className="text-sm font-medium text-gray-600 ml-2">Me</span>
               )}
             </div>
           ))}
-          {/* Show loading dots while waiting for response */}
           {loading && (
             <div className="flex justify-center items-center space-x-2">
               <div className="w-3 h-3 bg-gray-600 rounded-full animate-ping"></div>
@@ -117,7 +114,6 @@ export default function Chatbot() {
           )}
         </div>
 
-        {/* Input and Send Button */}
         <div className="flex space-x-4">
           <input
             type="text"
