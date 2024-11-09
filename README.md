@@ -11,4 +11,3 @@ Conversation History: The chatbot keeps track of past conversations, so it can r
 
 
 
-![image](https://github.com/user-attachments/assets/936452a7-fea3-4e10-9752-88d4ba532a42)
