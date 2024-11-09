@@ -1,21 +1,35 @@
-const cassandra = require('cassandra-driver');
+const cassandra = require("cassandra-driver");
+require("dotenv").config();
 
 const client = new cassandra.Client({
   cloud: {
-    secureConnectBundle: "C:\\Users\\musta\\OneDrive\\Desktop\\secure-connect-f1-racing-data.zip", // double backslashes
+    secureConnectBundle: process.env.ASTRA_DB_SECURE_CONNECT_BUNDLE,
   },
   credentials: {
-    username: 'ZJKxIOafLNAvdMLescKjPZya',
-    password: 'dofFXd7FsP.rh3Sb+SipmKCzEX2neNOa3XZC+hlwpf7Ft3OAD+NwCxjZaXN_1LQiAJcK32jKtA3jl2mOHIUPqZIS+hv0.3kgMUyUZuzd,2RksJo3lGDR6gxCReAHLSbn',
+    username: process.env.ASTRA_DB_UserName,
+    password: process.env.ASTRA_DB_CLIENT_Pass,
   },
+  keyspace: "default_keyspace",
 });
 
 async function connect() {
   try {
     await client.connect();
-    console.log('Connected to AstraDB successfully.');
+    console.log("Connected to AstraDB successfully.");
+
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS default_keyspace.text_embeddings (
+    chunk_id UUID PRIMARY KEY,
+    text TEXT,
+    embedding LIST<FLOAT>
+);
+
+    `;
+
+    await client.execute(createTableQuery);
+    console.log('Table "text_embeddings" created successfully.');
   } catch (error) {
-    console.error('Error connecting to AstraDB:', error);
+    console.error("Error connecting to AstraDB or creating table:", error);
   }
 }
 

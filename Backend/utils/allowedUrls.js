@@ -28,11 +28,6 @@ module.exports = [
     'https://en.wikipedia.org/wiki/List_of_Formula_One_race_winners_by_race_season_and_race_type',
     'https://en.wikipedia.org/wiki/List_of_Formula_One_race_winners_by_race_season_and_race_distance',
     'https://en.wikipedia.org/wiki/List_of_Formula_One_race_winners_by_race_season_and_race_surface',
-    'https://en.wikipedia.org/wiki/List_of_Formula_One_race_winners_by_race_season_and_race_year',
-    'https://en.wikipedia.org/wiki/List_of_Formula_One_race_winners_by_race_season_and_race_circuit',
-    'https://en.wikipedia.org/wiki/List_of_Formula_One_race_winners_by_race_season_and_race_date',
-    'https://en.wikipedia.org/wiki/List_of_Formula_One_race_winners_by_race_season_and_race_location',
-    'https://en.wikipedia.org/wiki/List_of_Formula_One_race_winners_by_race_season_and_race_time'
     
   ];
   
